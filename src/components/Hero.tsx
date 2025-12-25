@@ -38,41 +38,55 @@ export default function Hero() {
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e: any) => {
-    e.preventDefault();
-    if (!originCity || !destinationCity)
-      return alert("Fill origin & destination!");
+  e.preventDefault();
 
-    const originCode = cityToAirport[originCity];
-    const destinationCode = cityToAirport[destinationCity];
+  if (!originCity || !destinationCity) {
+    return alert("Fill origin & destination!");
+  }
 
-    if (!originCode || !destinationCode)
-      return alert("City not supported yet!");
+  const originCode = cityToAirport[originCity];
+  const destinationCode = cityToAirport[destinationCity];
 
-    setLoading(true);
+  if (!originCode || !destinationCode) {
+    return alert("City not supported yet!");
+  }
 
-    try {
-      const url = date
-        ? `http://localhost:3001/flights?origin=${originCode}&destination=${destinationCode}&date=${date}`
-        : `http://localhost:3001/flights_month?origin=${originCode}&destination=${destinationCode}`;
+  setLoading(true);
 
-      const res = await fetch(url);
-      const data = await res.json();
+  try {
+    // ✅ Use env variable for API URL
+    const API_URL = import.meta.env.VITE_API_URL;
 
-      const grouped: Record<string, any[]> = {};
-      (data.data || []).forEach((f: any) => {
-        const depDate = new Date(f.departure_at).toLocaleDateString();
-        if (!grouped[depDate]) grouped[depDate] = [];
-        grouped[depDate].push(f);
-      });
+    const url = date
+      ? `${API_URL}/flights?origin=${originCode}&destination=${destinationCode}&date=${date}`
+      : `${API_URL}/flights_month?origin=${originCode}&destination=${destinationCode}`;
 
-      setFlights(Object.entries(grouped));
-    } catch (err) {
-      console.error(err);
-      alert("Error fetching flights");
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data || !data.data) {
+      alert("No flights found");
+      setFlights([]);
+      return;
     }
 
+    // Group flights by departure date
+    const grouped: Record<string, any[]> = {};
+    (data.data || []).forEach((f: any) => {
+      const depDate = new Date(f.departure_at).toLocaleDateString();
+      if (!grouped[depDate]) grouped[depDate] = [];
+      grouped[depDate].push(f);
+    });
+
+    setFlights(Object.entries(grouped));
+  } catch (err) {
+    console.error(err);
+    alert("Error fetching flights");
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden pt-20">
