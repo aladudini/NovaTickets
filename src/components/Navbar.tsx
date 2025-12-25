@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logo from "./img/Novatickets_Logo.png";
+import logo from "./img/NovaTickets_Logo.png";
 
 interface NavbarProps {
   currentPage: string;
